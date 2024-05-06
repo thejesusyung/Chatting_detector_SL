@@ -5,6 +5,7 @@ import base64
 from google.oauth2 import service_account
 from google.cloud import vision
 import streamlit as st
+from groq import Groq
 
 
 
@@ -25,15 +26,18 @@ def detect_text(image_bytes):
     return response.text_annotations[0].description if response.text_annotations else ""
 
 def analyze_with_chatgpt(text):
-    """Send text to ChatGPT for analysis to determine if it's a conversation."""
-    openai.api_key = os.getenv('OPENAI_API_KEY')  # Ensure your API key is set in environment variables
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-instruct",  # Use the appropriate model name
-        messages=[{"role": "system", "content": "What follows is a text extracted from a screenshot of a user. The user sent this screenshot to a dating copilot bot and it is either a dialogue screenshot or not. It could be a screenshot of a person's dating profile page or a photo in which case no text would be exctracted. Only in case that it looks like the following text is a dialogue answer 'That is a dialogue!' In all the other cases answer 'Other!' Here follows the extracted text:"},
-                  {"role": "user", "content": text}]
-    )
-    return response['choices'][0]['message']['content']
+    """Send text to a chat model for analysis to determine if it's a conversation."""
+    # Assuming 'Groq' is a client library that you have correctly imported and set up
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
+    chat_completion = client.chat.completions.create(
+        messages=[{
+            "role": "user", 
+            "content": f"What follows is a text extracted from a screenshot of a user. The user sent this screenshot to a dating copilot bot and it is either a dialogue screenshot or not. It could be a screenshot of a person's dating profile page or a photo in which case no text would be extracted. Only in case that it looks like the following text is a dialogue answer 'That is a dialogue!' In all the other cases answer 'Other!' Here follows the extracted text: {text}"
+        }],
+        model="mixtral-8x7b-32768",  # Ensure this model identifier is correct
+    )
+    return chat_completion.choices[0].message.content
 
 def main():
     st.title("Image Conversation Detector")
