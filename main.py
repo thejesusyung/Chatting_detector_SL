@@ -6,7 +6,7 @@ from google.oauth2 import service_account
 from google.cloud import vision
 import streamlit as st
 from groq import Groq
-
+import time  # Import the time module
 
 
 def get_vision_client():
@@ -27,15 +27,13 @@ def detect_text(image_bytes):
 
 def analyze_with_chatgpt(text):
     """Send text to a chat model for analysis to determine if it's a conversation."""
-    # Assuming 'Groq' is a client library that you have correctly imported and set up
     client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
     chat_completion = client.chat.completions.create(
         messages=[{
             "role": "user", 
             "content": f"What follows is a text extracted from a screenshot of a user. The user sent this screenshot to a dating copilot bot and it is either a dialogue screenshot or not. It could be a screenshot of a person's dating profile page or a photo in which case no text would be extracted. Only in case that it looks like the following text is a dialogue answer 'That is a dialogue!' In all the other cases answer 'Other!' Here follows the extracted text: {text}"
         }],
-        model="mixtral-8x7b-32768",  # Ensure this model identifier is correct
+        model="mixtral-8x7b-32768",
     )
     return chat_completion.choices[0].message.content
 
@@ -45,14 +43,22 @@ def main():
     
     if uploaded_file is not None:
         with st.spinner('Extracting text and analyzing...'):
+            start_time = time.time()  # Start the timer
             text_content = detect_text(uploaded_file.getvalue())
+            text_extraction_time = time.time() - start_time  # Calculate text extraction time
+            
             if text_content:
                 st.text_area("Extracted Text", text_content, height=150)
+                start_time = time.time()  # Reset the timer for analysis
                 analysis_result = analyze_with_chatgpt(text_content)
+                analysis_time = time.time() - start_time  # Calculate analysis time
                 st.write("Analysis Result:")
                 st.write(analysis_result)
+                st.write(f"Text extraction time: {text_extraction_time:.2f} seconds")
+                st.write(f"Analysis time: {analysis_time:.2f} seconds")
             else:
                 st.write("No detectable text found in the image.")
+                st.write(f"Text extraction time: {text_extraction_time:.2f} seconds")
 
 if __name__ == "__main__":
     main()
