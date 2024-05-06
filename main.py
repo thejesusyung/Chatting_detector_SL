@@ -27,12 +27,13 @@ def detect_text(image_bytes):
 def analyze_with_chatgpt(text):
     """Send text to ChatGPT for analysis to determine if it's a conversation."""
     openai.api_key = os.getenv('OPENAI_API_KEY')  # Ensure your API key is set in environment variables
-    response = openai.Completion.create(
-        engine="gpt-4-turbo-2024-04-09",  # or the latest model
-        prompt=f"What follows is a text extracted from a screenshot of a user. The user sent this screenshot to a dating copilot bot and it is either a dialogue screenshot or not. It could be a screenshot of a person's dating profile page or a photo in which case no text would be exctracted. Only in case that it looks like the following text is a dialogue answer 'That is a dialogue!' In all the other cases answer 'Other!' Here follows the extracted text: {text}",
-        max_tokens=100
+    response = openai.ChatCompletion.create(
+        model="gpt-4-turbo-2024-04-09",  # Use the appropriate model name
+        messages=[{"role": "system", "content": "Classify the following text:"},
+                  {"role": "user", "content": text}]
     )
-    return response.choices[0].text.strip()
+    return response['choices'][0]['message']['content']
+
 
 def main():
     st.title("Image Conversation Detector")
