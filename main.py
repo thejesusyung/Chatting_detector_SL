@@ -1,46 +1,36 @@
+import os
+import json
+import base64
+from google.oauth2 import service_account
+from google.cloud import vision
 import streamlit as st
-from PIL import Image
-import time
 
-# Загрузите вашу модель
-# model = tf.keras.models.load_model('path_to_your_model')
+def get_vision_client():
+    # Decode the credentials from base64
+    creds_json_str = base64.b64decode(os.getenv('GOOGLE_CREDENTIALS')).decode('utf-8')
+    creds_dict = json.loads(creds_json_str)
 
-# Функция для классификации изображения
-def classify_image(image):
-    # Обработайте изображение под нужный формат
-    # Например:
-    # image = image.resize((224, 224))
-    # image = np.array(image)
-    # image = image / 255.0
-    # image = np.expand_dims(image, axis=0)
+    # Use the credentials to set up the client
+    credentials = service_account.Credentials.from_service_account_info(creds_dict)
+    client = vision.ImageAnnotatorClient(credentials=credentials)
+    return client
 
-    # Получите предсказание
-    # predictions = model.predict(image)
-    # result = 'Переписка' if np.argmax(predictions) == 0 else 'Что-то другое'
-    # confidence = np.max(predictions)
-    
-    # Вместо реальной модели, мы используем заглушку:
-    result = "Переписка"
-    confidence = 0.9
-    return result, confidence
+def detect_text(client, image_bytes):
+    image = vision.Image(content=image_bytes)
+    response = client.text_detection(image=image)
+    texts = response.text_annotations
+    return texts[0].description if texts else "No text found"
 
-# Настройка интерфейса
-st.title("Классификатор изображений")
-uploaded_file = st.file_uploader("Загрузите изображение", type=['png', 'jpeg', 'jpg'])
+def main():
+    st.title("OCR with Google Vision API")
+    uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+    if uploaded_file is not None:
+        image_bytes = uploaded_file.getvalue()
+        client = get_vision_client()
+        text = detect_text(client, image_bytes)
+        st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
+        st.write("Detected text:")
+        st.write(text)
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption='Загруженное изображение', use_column_width=True)
-    threshold = st.slider('Порог уверенности', 0.0, 1.0, 0.5)
-
-    if st.button('Классифицировать'):
-        start_time = time.time()
-        result, confidence = classify_image(image)
-        end_time = time.time()
-
-        st.write(f"Результат: {result}")
-        st.write(f"Время выполнения: {end_time - start_time:.4f} секунд")
-        if confidence > threshold:
-            st.write(f"Уверенность: {confidence:.2%}")
-        else:
-            st.write("Уверенность ниже порога")
+if __name__ == "__main__":
+    main()
