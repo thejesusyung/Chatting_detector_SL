@@ -28,7 +28,7 @@ def analyze_with_chatgpt(text):
     """Send text to ChatGPT for analysis to determine if it's a conversation."""
     openai.api_key = os.getenv('OPENAI_API_KEY')  # Ensure your API key is set in environment variables
     response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",  # Use the appropriate model name
+        model="gpt-3.5-turbo-instruct",  # Use the appropriate model name
         messages=[{"role": "system", "content": "What follows is a text extracted from a screenshot of a user. The user sent this screenshot to a dating copilot bot and it is either a dialogue screenshot or not. It could be a screenshot of a person's dating profile page or a photo in which case no text would be exctracted. Only in case that it looks like the following text is a dialogue answer 'That is a dialogue!' In all the other cases answer 'Other!' Here follows the extracted text:"},
                   {"role": "user", "content": text}]
     )
