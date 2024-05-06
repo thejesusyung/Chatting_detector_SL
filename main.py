@@ -1,12 +1,21 @@
-import streamlit as st
 import openai
 import os
+import json
+import base64
+from google.oauth2 import service_account
 from google.cloud import vision
+import streamlit as st
+
+
 
 def get_vision_client():
-    """Function to authenticate and return the Google Vision API client."""
-    # Initialize the Vision API client (assuming credentials are set up)
-    return vision.ImageAnnotatorClient()
+    # Decode the credentials from base64
+    creds_json_str = base64.b64decode(os.getenv('GOOGLE_CREDENTIALS')).decode('utf-8')
+    creds_dict = json.loads(creds_json_str)
+    # Use the credentials to set up the client
+    credentials = service_account.Credentials.from_service_account_info(creds_dict)
+    client = vision.ImageAnnotatorClient(credentials=credentials)
+    return client
 
 def detect_text(image_bytes):
     """Use Google Vision API to extract text from an image."""
