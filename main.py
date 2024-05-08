@@ -43,6 +43,24 @@ examples = [
     Example("Во сколько закрывается кухня?", "Часы работы"),
     Example("У вас есть безглютеновые опции?", "Информация о меню")
 ]
+option_1 = Route(
+    name="Опция один",
+    utterances=[
+        "У вас есть рекомендации для романтического ужина?",
+        "Можно ли привести собаку в кафе?",
+        "Будет ли сегодня вечером живая музыка?",
+        ],
+)
+option_2 = Route(
+    name="Опция два",
+    utterances=[
+        "Во сколько закрывается кухня?",
+        "У вас есть безглютеновые опции?",
+        ],
+)
+routes = [option_1, option_2]
+encoder = CohereEncoder()
+rl = RouteLayer(encoder=encoder, routes=routes)
 
 def analyze_with_chatgpt(text):
     rl(text).name
@@ -63,24 +81,7 @@ def analyze_with_chatgpt_2(text):
 def main():
     st.title("Image Conversation Detector")
     uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-    option_1 = Route(
-        name="Опция один",
-        utterances=[
-            "У вас есть рекомендации для романтического ужина?",
-            "Можно ли привести собаку в кафе?",
-            "Будет ли сегодня вечером живая музыка?",
-        ],
-    )
-    option_2 = Route(
-        name="Опция два",
-        utterances=[
-            "Во сколько закрывается кухня?",
-            "У вас есть безглютеновые опции?",
-        ],
-    )
-    routes = [option_1, option_2]
-    encoder = CohereEncoder()
-    rl = RouteLayer(encoder=encoder, routes=routes)
+   
     if uploaded_file is not None:
         with st.spinner('Extracting text and analyzing...'):
             start_time = time.time()  # Start the timer
