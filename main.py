@@ -9,6 +9,10 @@ from groq import Groq
 import time  # Import the time module
 import cohere
 from cohere.responses.classify import Example
+from semantic_router import Route
+import os
+from semantic_router.encoders import CohereEncoder
+from semantic_router.layer import RouteLayer
 
 def get_vision_client():
     # Decode the credentials from base64
@@ -41,6 +45,27 @@ examples = [
 ]
 
 def analyze_with_chatgpt(text):
+    option_1 = Route(
+        name="Опция один",
+        utterances=[
+            "У вас есть рекомендации для романтического ужина?",
+            "Можно ли привести собаку в кафе?",
+            "Будет ли сегодня вечером живая музыка?",
+        ],
+    )
+    option_2 = Route(
+        name="Опция два",
+        utterances=[
+            "Во сколько закрывается кухня?",
+            "У вас есть безглютеновые опции?",
+        ],
+    )
+    routes = [option_1, option_2]
+    encoder = CohereEncoder()
+    rl = RouteLayer(encoder=encoder, routes=routes)
+    rl(text).name
+    
+def analyze_with_chatgpt_2(text):
     """Send text to Cohere for classification to determine its intent based on predefined examples."""
     try:
         response = co.classify(
