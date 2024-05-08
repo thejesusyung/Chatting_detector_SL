@@ -45,6 +45,24 @@ examples = [
 ]
 
 def analyze_with_chatgpt(text):
+    rl(text).name
+
+def analyze_with_chatgpt_2(text):
+    """Send text to Cohere for classification to determine its intent based on predefined examples."""
+    try:
+        response = co.classify(
+            model='medium',
+            inputs=[text],
+            examples=examples,
+        )
+        return response.classifications[0].prediction
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return "Error in intent classification"
+
+def main():
+    st.title("Image Conversation Detector")
+    uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
     option_1 = Route(
         name="Опция один",
         utterances=[
@@ -63,25 +81,6 @@ def analyze_with_chatgpt(text):
     routes = [option_1, option_2]
     encoder = CohereEncoder()
     rl = RouteLayer(encoder=encoder, routes=routes)
-    rl(text).name
-    
-def analyze_with_chatgpt_2(text):
-    """Send text to Cohere for classification to determine its intent based on predefined examples."""
-    try:
-        response = co.classify(
-            model='medium',
-            inputs=[text],
-            examples=examples,
-        )
-        return response.classifications[0].prediction
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return "Error in intent classification"
-
-def main():
-    st.title("Image Conversation Detector")
-    uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
-    
     if uploaded_file is not None:
         with st.spinner('Extracting text and analyzing...'):
             start_time = time.time()  # Start the timer
