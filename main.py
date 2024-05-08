@@ -7,7 +7,8 @@ from google.cloud import vision
 import streamlit as st
 from groq import Groq
 import time  # Import the time module
-
+import cohere
+from cohere.responses.classify import Example
 
 def get_vision_client():
     # Decode the credentials from base64
@@ -25,17 +26,32 @@ def detect_text(image_bytes):
     response = client.text_detection(image=image)
     return response.text_annotations[0].description if response.text_annotations else ""
 
+
+
+# Initialize the Cohere client
+co = cohere.Client(os.getenv("COHERE_API_KEY"))
+
+# Define examples that represent different intents
+examples = [
+    Example("У вас есть рекомендации для романтического ужина?", "Рекомендации ресторанов"),
+    Example("Можно ли привести собаку в кафе?", "Политика относительно животных"),
+    Example("Будет ли сегодня вечером живая музыка?", "Мероприятия и развлечения"),
+    Example("Во сколько закрывается кухня?", "Часы работы"),
+    Example("У вас есть безглютеновые опции?", "Информация о меню")
+]
+
 def analyze_with_chatgpt(text):
-    """Send text to a chat model for analysis to determine if it's a conversation."""
-    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-    chat_completion = client.chat.completions.create(
-        messages=[{
-            "role": "user", 
-            "content": f"What follows is a text extracted from a screenshot of a user. The user sent this screenshot to a dating copilot bot and it is either a dialogue screenshot or not. It could be a screenshot of a person's dating profile page or a photo in which case no text would be extracted. Only in case that it looks like the following text is a dialogue answer 'That is a dialogue!' In all the other cases answer 'Other!' Here follows the extracted text: {text}"
-        }],
-        model="mixtral-8x7b-32768",
-    )
-    return chat_completion.choices[0].message.content
+    """Send text to Cohere for classification to determine its intent based on predefined examples."""
+    try:
+        response = co.classify(
+            model='medium',
+            inputs=[text],
+            examples=examples,
+        )
+        return response.classifications[0].prediction
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return "Error in intent classification"
 
 def main():
     st.title("Image Conversation Detector")
